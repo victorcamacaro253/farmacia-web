@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
 import { useCart } from './context/CartContext';
 import Header from './components/Header';
-import CategoryNav from './components/CategoryNav';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
