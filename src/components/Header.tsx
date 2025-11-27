@@ -319,10 +319,14 @@ export default function Header({
               </button>
 
               {/* Usuario móvil */}
-              
+
               <button
                 onClick={() => {
-                  onLoginClick();
+                  if (user) {
+                    onProfileClick?.(); // 👈 Ir al perfil si está logueado
+                  } else {
+                    onLoginClick(); // 👈 Ir al login si no lo está
+                  }
                   setIsMobileMenuOpen(false);
                 }}
                 className="flex items-center gap-3 w-full py-3 hover:text-blue-600 transition-colors text-left"
