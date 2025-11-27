@@ -1,7 +1,8 @@
+// pages/SearchPage.tsx
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { supabase } from '../lib/supabase';
+import mockData from '../data/data.json';
 import type { Product } from '../types';
 
 interface SearchPageProps {
@@ -24,17 +25,23 @@ export default function SearchPage({
     }
   }, [searchQuery]);
 
-  const searchProducts = async () => {
+  const searchProducts = () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('products')
-      .select('*')
-      .ilike('name', `%${searchQuery}%`);
+    
+    // Simular retraso de búsqueda (opcional)
+    setTimeout(() => {
+      const term = searchQuery.toLowerCase().trim();
+      
+      const filtered = mockData.products.filter(product => {
+        const matchesName = product.name.toLowerCase().includes(term);
+        const matchesBrand = product.brand.toLowerCase().includes(term);
+        const matchesTags = product.tags?.some(tag => tag.toLowerCase().includes(term));
+        return matchesName || matchesBrand || matchesTags;
+      });
 
-    if (data) {
-      setProducts(data);
-    }
-    setLoading(false);
+      setProducts(filtered);
+      setLoading(false);
+    }, 300); // Simula carga rápida
   };
 
   return (
@@ -59,7 +66,7 @@ export default function SearchPage({
         ) : products.length > 0 ? (
           <>
             <div className="mb-4 text-gray-600">
-              {products.length} productos encontrados
+              {products.length} producto{products.length !== 1 ? 's' : ''} encontrado{products.length !== 1 ? 's' : ''}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
