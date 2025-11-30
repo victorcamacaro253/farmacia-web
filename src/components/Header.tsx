@@ -1,39 +1,29 @@
-import { Search, MapPin, User, ShoppingCart, Menu, ChevronDown, X } from 'lucide-react';
-import { useState } from 'react';
-import { Category } from '../types';
+// components/Header.tsx
+import { useState, useEffect } from 'react';
+import { 
+  Search, MapPin, User, ShoppingCart, Menu, ChevronDown, X 
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../hooks/useAuth';
+import type { Category } from '../types';
 
 interface HeaderProps {
-  onSearch: (query: string) => void;
-  cartItemCount: number;
-  selectedBranch: string | null;
-  onBranchClick: () => void;
-  onCartClick: () => void;
-  onLoginClick: () => void;
-  onLogout: () => void; 
-  isLoggedIn: boolean;
   allCategories: Category[];
   categories: Category[];
-  onCategoryClick: (slug: string, parentSlug?: string) => void;
-  onProfileClick?: () => void; 
-  user: { full_name: string } | null;
+  selectedBranch: string | null;
 }
 
 export default function Header({
-  onSearch,
-  cartItemCount,
-  selectedBranch,
-  onBranchClick,
-  onCartClick,
-  onLoginClick,
-  isLoggedIn,
-  onLogout,
-  categories,
   allCategories,
-  onCategoryClick,
-  onProfileClick,
-  user,
+  categories,
+  selectedBranch,
 }: HeaderProps) {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { totalItems } = useCart();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
@@ -43,7 +33,7 @@ export default function Header({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      onSearch(searchQuery);
+      navigate(`/buscar?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -52,15 +42,28 @@ export default function Header({
   };
 
   const handleMobileCategoryClick = (slug: string) => {
-    onCategoryClick(slug);
+    navigate(`/categorias/${slug}`);
     setIsMobileMenuOpen(false);
     setIsMobileCategoriesOpen(false);
   };
 
   const handleMobileSubcategoryClick = (subSlug: string, parentSlug: string) => {
-    onCategoryClick(subSlug, parentSlug); // 👈
+    navigate(`/categorias/${parentSlug}/${subSlug}`);
     setIsMobileMenuOpen(false);
-    setIsMobileCategoriesOpen(null);
+    setIsMobileCategoriesOpen(false);
+  };
+
+  const handleLoginClick = () => {
+    if (user) {
+      logout();
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  const handleProfileClick = () => {
+    navigate('/perfil');
+    setIsUserDropdownOpen(false);
   };
 
   return (
@@ -89,34 +92,17 @@ export default function Header({
           </button>
 
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <div className="bg-blue-600 text-white px-2 py-1 rounded-lg font-bold text-xl">
               F+
             </div>
             <span className="text-xl font-bold text-blue-600 hidden sm:block">
               FarmaSalud
             </span>
-          </a>
-
-          {/* País - Oculto en móvil */}
-          <a
-            href="/cuenta/perfil"
-            className="hidden md:flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <img
-              alt="Profile Icon"
-              src="https://utilities.farmatodo.com//arg.svg"
-              className="w-6 h-5 object-cover rounded"
-            />
-            <span>Argentina</span>
-            <div className="w-0 h-0 border-l-4 border-r-4 border-t-6 border-transparent border-t-blue-500"></div>
-          </a>
+          </Link>
 
           {/* Búsqueda desktop */}
-          <form
-            onSubmit={handleSearch}
-            className="flex-1 max-w-2xl hidden md:block"
-          >
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl hidden md:block">
             <div className="relative max-w-md mx-auto">
               <input
                 type="text"
@@ -138,7 +124,7 @@ export default function Header({
           <div className="flex items-center gap-4">
             {/* Sucursal - Oculto en móvil */}
             <button
-              onClick={onBranchClick}
+              onClick={() => navigate('/mapa')}
               className="hidden lg:flex items-center gap-2 text-sm hover:text-blue-600 transition-colors"
             >
               <MapPin className="w-5 h-5" />
@@ -150,70 +136,62 @@ export default function Header({
               </div>
             </button>
 
-            {/* Usuario - Oculto en móvil pequeño */}
-
-            {/* Usuario - Oculto en móvil pequeño */}
+            {/* Usuario */}
             <div className="hidden sm:flex items-center gap-2 text-sm hover:text-blue-600 transition-colors">
-  {user ? (
-    <div className="relative">
-      <div
-        className="flex items-center gap-2 cursor-pointer"
-        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-      >
-        <User className="w-5 h-5" />
-        <span className="hidden lg:block">{user.full_name}</span>
-         <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />
-      </div>
-      {isUserDropdownOpen && (
+              {user ? (
+                <div className="relative">
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="hidden lg:block">{user.full_name}</span>
+                    <ChevronDown className="w-4 h-4 ml-1 transition-transform" />
+                  </div>
+                  {isUserDropdownOpen && (
                     <div className="absolute right-0 mt-1 w-48 bg-white shadow-lg rounded-md py-1 z-50">
-         
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Llamar a una función que navegue a perfil
-                          onProfileClick?.(); // 👈 nueva prop
-                          setIsUserDropdownOpen(false);
+                          handleProfileClick();
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Mi cuenta
                       </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onLogout();
-              setIsUserDropdownOpen(false);
-            }}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      )}
-    </div>
-  ) : (
-    <button
-      onClick={onLoginClick}
-      className="flex items-center gap-2"
-    >
-      <User className="w-5 h-5" />
-      <span className="hidden lg:block">Ingresar</span>
-    </button>
-  )}
-</div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          logout();
+                          setIsUserDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleLoginClick}
+                  className="flex items-center gap-2"
+                >
+                  <User className="w-5 h-5" />
+                  <span className="hidden lg:block">Ingresar</span>
+                </button>
+              )}
+            </div>
 
             {/* Carrito */}
-            <button
-              onClick={onCartClick}
-              className="relative hover:text-blue-600 transition-colors"
-            >
+            <Link to="/carrito" className="relative hover:text-blue-600 transition-colors">
               <ShoppingCart className="w-6 h-6" />
-              {cartItemCount > 0 && (
+              {totalItems > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartItemCount}
+                  {totalItems}
                 </span>
               )}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -250,35 +228,28 @@ export default function Header({
                   onMouseEnter={() => setIsDropdownOpen(category.id)}
                   onMouseLeave={() => setIsDropdownOpen(null)}
                 >
-                  <button
-                    onClick={() => onCategoryClick(category.slug)}
+                  <Link
+                    to={`/categorias/${category.slug}`}
                     className="text-gray-700 hover:text-blue-600 text-xs font-medium flex items-center gap-1 py-2 transition-colors"
                   >
                     {category.name}
                     {subcategories.length > 0 && (
                       <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />
                     )}
-                  </button>
+                  </Link>
 
                   {subcategories.length > 0 && isDropdownOpen === category.id && (
                     <div className="absolute left-0 top-full mt-1 w-96 bg-white shadow-xl rounded-md py-4 px-6 z-50">
                       <div className="grid gap-3">
                         {subcategories.map(sub => (
-                          <div key={sub.id} className="category-container">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                              <a
-                                href={`/categorias/${category.slug}/${sub.slug}`}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  onCategoryClick(sub.slug, category.slug);
-                                }}
-                                className="hover:text-blue-600 text-xs transition-colors block py-1"
-                                style={{ color: '#63428F' }}
-                              >
-                                {sub.name}
-                              </a>
-                            </h3>
-                          </div>
+                          <Link
+                            key={sub.id}
+                            to={`/categorias/${category.slug}/${sub.slug}`}
+                            className="text-sm font-semibold text-gray-900 hover:text-blue-600 text-xs transition-colors block py-1"
+                            style={{ color: '#63428F' }}
+                          >
+                            {sub.name}
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -301,10 +272,9 @@ export default function Header({
             className="lg:hidden fixed inset-0 top-[120px] bg-white z-40 overflow-y-auto"
           >
             <div className="p-4 border-b">
-              {/* Sucursal móvil */}
               <button
                 onClick={() => {
-                  onBranchClick();
+                  navigate('/mapa');
                   setIsMobileMenuOpen(false);
                 }}
                 className="flex items-center gap-3 w-full py-3 hover:text-blue-600 transition-colors text-left"
@@ -318,14 +288,12 @@ export default function Header({
                 </div>
               </button>
 
-              {/* Usuario móvil */}
-
               <button
                 onClick={() => {
                   if (user) {
-                    onProfileClick?.(); // 👈 Ir al perfil si está logueado
+                    navigate('/perfil');
                   } else {
-                    onLoginClick(); // 👈 Ir al login si no lo está
+                    navigate('/auth');
                   }
                   setIsMobileMenuOpen(false);
                 }}
@@ -336,7 +304,7 @@ export default function Header({
                   {user ? (
                     <>
                       <div className="text-sm text-gray-500">Mi cuenta</div>
-                      <div className="font-medium">{user.full_name}</div> {/* ✅ Nombre real */}
+                      <div className="font-medium">{user.full_name}</div>
                     </>
                   ) : (
                     <>
@@ -346,19 +314,6 @@ export default function Header({
                   )}
                 </div>
               </button>
-
-              {/* País móvil */}
-              <a
-                href="/cuenta/perfil"
-                className="flex items-center gap-3 w-full py-3 hover:text-blue-600 transition-colors"
-              >
-                <img
-                  alt="Argentina"
-                  src="https://utilities.farmatodo.com//arg.svg"
-                  className="w-6 h-5 object-cover rounded flex-shrink-0"
-                />
-                <span className="font-medium">Argentina</span>
-              </a>
             </div>
 
             {/* Categorías móviles */}
@@ -384,13 +339,11 @@ export default function Header({
                         <span>{category.name}</span>
                         {subcategories.length > 0 && (
                           <ChevronDown
-                            className={`w-4 h-4 transition-transform ${isMobileCategoriesOpen === category.id ? 'rotate-180' : ''
-                              }`}
+                            className={`w-4 h-4 transition-transform ${isMobileCategoriesOpen === category.id ? 'rotate-180' : ''}`}
                           />
                         )}
                       </button>
 
-                      {/* Subcategorías móviles */}
                       <AnimatePresence>
                         {subcategories.length > 0 && isMobileCategoriesOpen === category.id && (
                           <motion.div
@@ -424,7 +377,6 @@ export default function Header({
         )}
       </AnimatePresence>
 
-      {/* Overlay para menú móvil */}
       {isMobileMenuOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"

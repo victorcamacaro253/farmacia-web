@@ -2,23 +2,17 @@ import { useState, useEffect } from 'react';
 import { Filter, ChevronDown, Grid3X3, List } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import mockData from '../data/data.json';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { Product, Category } from '../types';
 
-interface CategoryPageProps {
-  categorySlug: string;
-    subcategorySlug?: string;
-  onProductClick: (slug: string) => void;
-  onAddToCart: (product: Product) => void;
-  onSubcategoryClick?: (slug: string) => void;
-}
 
-export default function CategoryPage({
-  categorySlug,
-  onProductClick,
-   subcategorySlug,
-  onAddToCart,
-  onSubcategoryClick,
-}: CategoryPageProps) {
+export default function CategoryPage() {
+   const { slug, parentSlug } = useParams<{ slug: string; parentSlug?: string }>();
+  const navigate = useNavigate();
+
+   const categorySlug = parentSlug || slug;
+  const subcategorySlug = parentSlug ? slug : undefined;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
@@ -96,16 +90,12 @@ useEffect(() => {
     }
   };
 
+  
   const handleSubcategoryClick = (subcategorySlug: string) => {
-    if (selectedSubcategory === subcategorySlug) {
-      // Si ya está seleccionada, deseleccionar
-      setSelectedSubcategory(null);
+    if (subcategorySlug === selectedSubcategory) {
+      navigate(`/categorias/${categorySlug}`);
     } else {
-      setSelectedSubcategory(subcategorySlug);
-    }
-    
-    if (onSubcategoryClick) {
-      onSubcategoryClick(subcategorySlug);
+      navigate(`/categorias/${categorySlug}/${subcategorySlug}`);
     }
   };
 
@@ -391,8 +381,7 @@ useEffect(() => {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onProductClick={onProductClick}
-                  onAddToCart={onAddToCart}
+                
                   viewMode={viewMode}
                   showSubcategory={true}
                   subcategoryName={getSubcategoryName(product.subcategory_id || '')}

@@ -10,14 +10,17 @@ import {
   Shield,
   Heart,
   Play,
-  Pause
+  Pause,
+  ChevronRightIcon
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import mockData from '../data/data.json';
 import type { Product, Branch, BranchHours } from '../types';
+import { Link, useNavigate } from 'react-router-dom';
 import BrandCard from '../components/BrandCard';
 import HorizontalOfferCarousel from '../components/HorizontalOfferCarousel';
 import DoubleBanner from '../components/DoubleBanner';
+import { useCart } from '../context/CartContext';
 
 
 interface HomePageProps {
@@ -41,8 +44,8 @@ const CategoryCard = ({
   color: string;
   onClick: () => void;
 }) => (
-  <button
-    onClick={onClick}
+  <Link
+    to={`/categorias/${slug}`}
     className="flex flex-col items-center p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md border border-transparent hover:border-blue-200 min-w-0"
     aria-label={`Explorar categoría ${name}`}
   >
@@ -52,7 +55,7 @@ const CategoryCard = ({
     <span className="font-medium text-gray-700 text-center group-hover:text-blue-600 text-xs sm:text-sm md:text-base leading-tight sm:leading-normal">
       {name}
     </span>
-  </button>
+  </Link>
 );
 
 // ✅ Extract BranchCard
@@ -120,12 +123,13 @@ const BranchCard = ({ branch }: { branch: Branch }) => {
         </div>
       </div>
 
-      <button 
-        className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+      <Link 
+        to="/mapa"
+        className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium block text-center"
         aria-label={`Ver ${branch.name} en el mapa`}
       >
         Ver en mapa
-      </button>
+      </Link>
     </div>
   );
 };
@@ -227,6 +231,8 @@ const BannerSlider = ({
     setCurrentSlide(index);
   };
 
+  
+
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden">
       {/* Slider Track */}
@@ -294,12 +300,9 @@ const BannerSlider = ({
   );
 };
 
-export default function HomePage({
-  onProductClick,
-  onAddToCart,
-  onBranchClick,
-  onCategoryClick,
-}: HomePageProps) {
+export default function HomePage() {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [saleProducts, setSaleProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
@@ -415,9 +418,21 @@ export default function HomePage({
     loadData();
   }, [loadData]);
 
-  const handleBannerClick = useCallback((category: string) => {
-    onCategoryClick?.(category);
-  }, [onCategoryClick]);
+  const handleBannerClick = useCallback((categorySlug: string) => {
+    navigate(`/categorias/${categorySlug}`);
+  }, [navigate]);
+
+  const handleBranchClick = () => {
+    navigate('/sucursales');
+  };
+
+  const handleProductClick = (slug: string) => {
+    navigate(`/producto/${slug}`);
+  };
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -463,11 +478,7 @@ export default function HomePage({
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
             {categories.map((cat) => (
-              <CategoryCard
-                key={cat.slug}
-                {...cat}
-                onClick={() => onCategoryClick?.(cat.slug)}
-              />
+              <CategoryCard key={cat.slug} {...cat} />
             ))}
           </div>
         </div>
@@ -484,101 +495,27 @@ export default function HomePage({
               </h2>
               <p className="text-gray-600 mt-1 text-sm sm:text-base">Los más vendidos y mejor valorados por nuestros clientes</p>
             </div>
-            <button
-              onClick={() => onCategoryClick?.('destacados')}
+             <Link
+              to="/categorias/destacados"
               className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm flex items-center gap-1 self-start sm:self-auto"
             >
               Ver todos
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </button>
+              <ChevronRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+            </Link>
           </div>
 
           {/* Responsive product grid */}
           <div className="sm:px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-            {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
-              >
-                {/* Imagen + badges */}
-                <div className="relative">
-                  <img
-                    src={product.images[0] || 'https://images.pexels.com/photos/3683041/pexels-photo-3683041.jpeg'}
-                    alt={product.name}
-                    className="w-full h-32 sm:h-36 md:h-40 object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
-                    onClick={() => onProductClick(product.slug)}
-                  />
-                  {/* Badges */}
-                  <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 flex flex-col gap-1">
-                    {product.is_featured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full flex items-center gap-1">
-                        <Star className="w-2 h-2 sm:w-3 sm:h-3 fill-current" />
-                        Top
-                      </span>
-                    )}
-                    {product.requires_prescription && (
-                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
-                        Receta
-                      </span>
-                    )}
-                  </div>
-                  {product.compare_at_price && (
-                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
-                      -{Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)}%
-                    </div>
-                  )}
-                </div>
-
-                {/* Contenido */}
-                <div className="p-2 sm:p-3 flex flex-col flex-1">
-                  <div className="text-xs text-gray-500 font-medium mb-1">{product.brand}</div>
-                  <h3
-                    className="text-sm font-semibold text-gray-800 mb-2 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors leading-tight"
-                    onClick={() => onProductClick(product.slug)}
-                  >
-                    {product.name}
-                  </h3>
-
-                  {/* Precios */}
-                  <div className="mt-auto">
-                    <div className="flex items-baseline gap-1 sm:gap-2 mb-2">
-                      <span className="text-base sm:text-lg font-bold text-blue-600">
-                        ${product.price.toLocaleString('es-AR')}
-                      </span>
-                      {product.compare_at_price && (
-                        <span className="text-xs sm:text-sm text-gray-400 line-through">
-                          ${product.compare_at_price.toLocaleString('es-AR')}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stock bajo */}
-                    {product.stock > 0 && product.stock < 10 && (
-                      <p className="text-xs text-orange-600 mb-2">¡Últimas {product.stock} unidades!</p>
-                    )}
-
-                    {/* Botón de agregar */}
-                    {product.stock > 0 ? (
-                      <button
-                        onClick={() => onAddToCart(product)}
-                        className="w-full bg-blue-600 text-white py-1.5 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
-                      >
-                        Agregar al carrito
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="w-full bg-gray-200 text-gray-500 py-1.5 sm:py-2 rounded-lg cursor-not-allowed text-xs sm:text-sm font-medium"
-                      >
-                        Sin stock
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+              {featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onProductClick={handleProductClick}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
@@ -618,8 +555,8 @@ export default function HomePage({
                     <ProductCard
                       key={product.id}
                       product={product}
-                      onProductClick={onProductClick}
-                      onAddToCart={onAddToCart}
+                      onProductClick={handleProductClick}
+                      onAddToCart={handleAddToCart}
                     />
                   ))}
                 </div>
@@ -650,7 +587,7 @@ export default function HomePage({
         
         <HorizontalOfferCarousel
           products={saleProducts}
-          onProductClick={onProductClick}
+          onProductClick={handleProductClick}
           title="Ofertas Relámpago"
         />
 
@@ -686,7 +623,7 @@ export default function HomePage({
               <p className="text-gray-600 mt-1 text-sm sm:text-base">Encontrá tu farmacia más cercana</p>
             </div>
             <button
-              onClick={onBranchClick}
+              onClick={handleBranchClick}
               className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2 text-xs sm:text-sm md:text-base self-start sm:self-auto"
             >
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />

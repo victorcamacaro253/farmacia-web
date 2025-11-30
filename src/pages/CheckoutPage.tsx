@@ -4,12 +4,13 @@ import { CreditCard, MapPin, Building } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import mockData from '../data/data.json';
 import type { Branch } from '../types';
+import { useNavigate } from 'react-router-dom'; 
+import { orderService } from '../services/OrderService';
 
-interface CheckoutPageProps {
-  onSuccess: () => void;
-}
 
-export default function CheckoutPage({ onSuccess }: CheckoutPageProps) {
+
+export default function CheckoutPage() {
+  const navigate = useNavigate(); 
   const { items, totalPrice, clearCart } = useCart();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
@@ -48,18 +49,24 @@ export default function CheckoutPage({ onSuccess }: CheckoutPageProps) {
       return;
     }
 
-    // Aquí podrías guardar el pedido en localStorage o simular una API
-    console.log('Pedido confirmado', {
+    const orderData = {
+      id: `ORD-${Date.now()}`, // Genera un ID único
       items,
       deliveryMethod,
       selectedBranch: deliveryMethod === 'pickup' ? selectedBranch : null,
-      formData,
+      formData: deliveryMethod === 'delivery' ? formData : null,
       paymentMethod,
       total: finalTotal,
-    });
+      createdAt: new Date().toISOString(),
+    };
+
+    // Guardar en localStorage (opcional, para persistencia)
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
 
     clearCart();
-    onSuccess();
+
+    // 👇 Navegar con datos
+    navigate('/order-success', { state: { order: orderData } });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

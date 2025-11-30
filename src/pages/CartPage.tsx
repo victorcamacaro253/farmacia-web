@@ -1,16 +1,19 @@
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom'; 
 
-interface CartPageProps {
-  onCheckout: () => void;
-  onContinueShopping: () => void;
-}
 
-export default function CartPage({
-  onCheckout,
-  onContinueShopping,
-}: CartPageProps) {
+export default function CartPage() {
   const { items, updateQuantity, removeFromCart, totalPrice } = useCart();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    navigate('/checkout');
+  };
+
+  const handleContinueShopping = () => {
+    navigate('/');
+  };
 
   if (items.length === 0) {
     return (
@@ -25,7 +28,7 @@ export default function CartPage({
               Agregá productos para comenzar tu compra
             </p>
             <button
-              onClick={onContinueShopping}
+              onClick={handleContinueShopping}
               className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-semibold"
             >
               Continuar Comprando
@@ -156,14 +159,14 @@ export default function CartPage({
               )}
 
               <button
-                onClick={onCheckout}
+                onClick={handleCheckout}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold mb-3"
               >
                 Finalizar Compra
               </button>
 
               <button
-                onClick={onContinueShopping}
+                onClick={handleContinueShopping}
                 className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 font-semibold"
               >
                 Continuar Comprando
