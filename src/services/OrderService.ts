@@ -1,6 +1,8 @@
 // services/OrderService.ts
 import { Order, OrderItem } from '../types';
 
+
+
 class OrderService {
   private readonly STORAGE_KEY = 'farmasalud_orders';
 
@@ -16,6 +18,7 @@ class OrderService {
   // Obtener todas las órdenes de un usuario
   getOrdersByUser(userId: string): Order[] {
     const orders = this.getOrders();
+    console.log('All Orders:', orders);
     return orders.filter(order => order.user_id === userId);
   }
 

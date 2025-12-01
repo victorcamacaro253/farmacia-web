@@ -2,22 +2,10 @@
 import { useState, useEffect } from 'react';
 import { User, MapPin, Mail, Phone, LogOut, Package, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import type { Branch, Product } from '../types';
+import type { Branch, Product,Order } from '../types';
 import mockData from '../data/data.json';
+import { orderService } from '../services/OrderService';
 
-interface OrderItem {
-  product_id: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  branch_id: string;
-  total: number;
-  created_at: string;
-  items: OrderItem[];
-}
 
 interface ProfilePageProps {
   onLogout: () => void;
@@ -40,7 +28,7 @@ export default function ProfilePage({ onLogout, onBranchClick }: ProfilePageProp
       if (branch) setSavedBranch(branch);
     }
 
-    const userId = 'user-1'; // En producción: user?.id
+  /*  const userId = 'user-1'; // En producción: user?.id
     const userOrders = mockData.orders.filter(order => order.user_id === userId);
     const enrichedOrders: Order[] = userOrders.map(order => {
       const items = mockData.order_items
@@ -58,8 +46,41 @@ export default function ProfilePage({ onLogout, onBranchClick }: ProfilePageProp
         items,
       };
     });
-    setOrders(enrichedOrders);
+    */
+    loadOrdersData('user-1'); // En producción: user?.id
+   
   }, []);
+
+  const loadOrdersData = (userId: string) => {
+  // Usa filter() para obtener un ARRAY de órdenes
+  const userOrders = mockData.orders.filter(order => order.user_id === userId);
+  
+  // Enriquecer cada orden con sus items
+  const enrichedOrders: Order[] = userOrders.map(order => {
+    const items = mockData.order_items
+      .filter(item => item.order_id === order.id)
+      .map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+
+    return {
+      id: order.id,
+      user_id: order.user_id,        // 👈 asegúrate de incluir user_id
+      branch_id: order.branch_id,
+      status: order.status,          // 👈 añade status
+      total: order.total,
+      created_at: order.created_at,
+      items,
+      // shipping_address y payment_method si los necesitas:
+      shipping_address: order.shipping_address || null,
+      payment_method: order.payment_method || 'credit_card',
+    };
+  });
+
+  setOrders(enrichedOrders);
+};
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

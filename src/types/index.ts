@@ -85,10 +85,12 @@ export interface Order {
   shipping_address: ShippingAddress;
   payment_method: string;
   created_at: string;
+   items: OrderItem[];
 }
 
 export interface ShippingAddress {
   full_name: string;
+  email: string;
   address: string;
   city: string;
   province: string;

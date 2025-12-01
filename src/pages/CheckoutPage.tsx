@@ -49,7 +49,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    const orderData = {
+  /*  const orderData = {
       id: `ORD-${Date.now()}`, // Genera un ID único
       items,
       deliveryMethod,
@@ -58,15 +58,30 @@ export default function CheckoutPage() {
       paymentMethod,
       total: finalTotal,
       createdAt: new Date().toISOString(),
-    };
+    };*/
+
+    const newOrder = orderService.createOrder({
+        user_id: 'user-1', // o user.id si tienes autenticación dinámica
+        branch_id: deliveryMethod === 'pickup' ? selectedBranch : null,
+        status: 'completed',
+        total: finalTotal,
+        shipping_address: deliveryMethod === 'delivery' ? formData : null,
+        payment_method: paymentMethod,
+        created_at: new Date().toISOString(),
+        items: items.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+      });
 
     // Guardar en localStorage (opcional, para persistencia)
-    localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    localStorage.setItem('lastOrder', JSON.stringify(newOrder));
 
     clearCart();
 
     // 👇 Navegar con datos
-    navigate('/order-success', { state: { order: orderData } });
+    navigate('/order-success', { state: { order: newOrder } });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
