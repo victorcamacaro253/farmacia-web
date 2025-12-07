@@ -37,8 +37,11 @@ export default function OrderSuccessPage() {
   }
 
   // Obtener nombres de productos y sucursal
+  console.log("Order items:", order);
+
   const enrichedItems = order.items.map(item => {
-    const product = mockData.products.find(p => p.id === item.product.id);
+    const product = mockData.products.find(p => p.id === item.product_id);
+    console.log('Enriching Item:', item, 'with Product:', product);
     return {
       ...item,
       name: product?.name || 'Producto no disponible',
@@ -46,6 +49,7 @@ export default function OrderSuccessPage() {
     };
   });
 
+  
   const branch = order.selectedBranch
     ? mockData.branches.find(b => b.id === order.selectedBranch)
     : null;
@@ -156,8 +160,8 @@ export default function OrderSuccessPage() {
                 <div key={idx} className="flex justify-between border-b pb-2">
                   <div>
                      <img
-                    src={item.product.images[0] || 'https://images.pexels.com/photos/3683041/pexels-photo-3683041.jpeg'}
-                    alt={item.product.name}
+                    src={item.images || 'https://images.pexels.com/photos/3683041/pexels-photo-3683041.jpeg'}
+                    alt={item.name}
                     className="w-24 h-24 object-cover rounded-lg"
                   />
                   </div>
@@ -169,10 +173,10 @@ export default function OrderSuccessPage() {
                   <div className="text-right">
                     <p>x{item.quantity}</p>
                     <p className="text-sm text-gray-500">
-                      ${item.product.price.toLocaleString('es-AR')} c/u
+                      ${item.price.toLocaleString('es-AR')} c/u
                     </p>
                     <p className="font-medium">
-                      ${(item.quantity * item.product.price).toLocaleString('es-AR')}
+                      ${(item.quantity * item.price).toLocaleString('es-AR')}
                     </p>
                   </div>
                 </div>

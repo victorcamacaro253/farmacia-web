@@ -1,77 +1,138 @@
+// pages/ProductPage.tsx
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, Truck, Shield, Clock } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 import mockData from '../data/data.json';
 import type { Product } from '../types';
 
-interface ProductPageProps {
-  productSlug: string;
-  onAddToCart: (product: Product, quantity?: number) => void;
-  onProductClick: (slug: string) => void;
-}
+export default function ProductPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-export default function ProductPage({
-  productSlug,
-  onAddToCart,
-  onProductClick,
-}: ProductPageProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
-    loadProductData();
-  }, [productSlug]);
+    if (!slug) return;
 
-  const loadProductData = () => {
-    // Buscar el producto por slug
-    const productData = mockData.products.find(p => p.slug === productSlug);
-
+    const productData = mockData.products.find(p => p.slug === slug);
     if (productData) {
       setProduct(productData);
-
-      // Buscar productos relacionados (misma categoría, excluyendo el actual)
-      const related = mockData.products.filter(
-        p => p.category_id === productData.category_id && p.id !== productData.id
-      ).slice(0, 4);
-
+      const related = mockData.products
+        .filter(p => p.category_id === productData.category_id && p.id !== productData.id)
+        .slice(0, 4);
       setRelatedProducts(related);
     }
-  };
+  }, [slug]);
 
   const handleAddToCart = () => {
     if (product) {
+      // Agregar la cantidad seleccionada de una vez
       for (let i = 0; i < quantity; i++) {
-        onAddToCart(product);
+        addToCart(product);
       }
+      // Opcional: Mostrar notificación o navegar al carrito
     }
   };
 
+  const handleProductClick = (slug: string) => {
+    navigate(`/producto/${slug}`);
+  };
+
   const discount = product?.compare_at_price
-    ? Math.round(
-        ((product.compare_at_price - product.price) / product.compare_at_price) *
-          100
-      )
+    ? Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)
     : 0;
 
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Cargando producto...</p>
+        <p className="text-gray-500">Producto no encontrado</p>
       </div>
     );
   }
 
+  // Helper para obtener la jerarquía de categorías
+  const getCategoryPath = (categoryId: string, subcategoryId?: string) => {
+    const categories: { name: string; slug: string }[] = [];
+
+    // Buscar categoría principal
+    const mainCategory = mockData.categories.find(cat => cat.id === categoryId && !cat.parent_id);
+    if (mainCategory) {
+      categories.push({ name: mainCategory.name, slug: mainCategory.slug });
+
+      // Si hay subcategoría, buscarla
+      if (subcategoryId) {
+        const subCategory = mockData.categories.find(cat => cat.id === subcategoryId);
+        if (subCategory) {
+          categories.push({ name: subCategory.name, slug: subCategory.slug });
+        }
+      }
+    }
+
+    return categories;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ml-10 mt-10">
+      {/* Breadcrumb */}
+      {product && (
+        <nav
+          className="max-w-7xl mx-auto px-4 py-4 overflow-x-auto whitespace-nowrap"
+          aria-label="Navegación de migas de pan"
+        >
+          <ol className="flex items-center text-sm text-gray-500">
+            {/* Home - Siempre visible */}
+            <li>
+              <a href="/" className="hover:text-blue-600 font-medium">Inicio</a>
+            </li>
+
+            {(() => {
+              const categoryPath = getCategoryPath(product.category_id, product.subcategory_id);
+              const totalItems = categoryPath.length + 2; // Inicio + categorías + producto
+
+              return categoryPath.map((cat, index) => {
+                // En móviles, solo mostramos la última categoría si hay más de 1
+                if (categoryPath.length > 1 && index < categoryPath.length - 1) {
+                  return null;
+                }
+
+                return (
+                  <li key={cat.slug} className="flex items-center">
+                    <span className="mx-2 text-gray-400">/</span>
+                    <a
+                      href={`/categorias/${cat.slug}`}
+                      className="hover:text-blue-600 whitespace-nowrap"
+                    >
+                      {cat.name}
+                    </a>
+                  </li>
+                );
+              });
+            })()}
+
+            {/* Nombre del producto - Siempre visible */}
+            <li className="flex items-center">
+              <span className="mx-2 text-gray-400">/</span>
+              <span className="text-gray-800 font-medium whitespace-nowrap">
+                {product.name}
+              </span>
+            </li>
+          </ol>
+        </nav>
+      )}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Imágenes */}
             <div>
               <div className="mb-4 rounded-lg overflow-hidden bg-gray-100">
                 <img
-                  src={product.images[selectedImage] || product.images[0] || 'https://images.pexels.com/photos/3683041/pexels-photo-3683041.jpeg'}
+                  src={product.images[selectedImage] || 'https://images.pexels.com/photos/3683041/pexels-photo-3683041.jpeg'}
                   alt={product.name}
                   className="w-full h-96 object-contain"
                 />
@@ -82,11 +143,8 @@ export default function ProductPage({
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-1 rounded-lg overflow-hidden border-2 ${
-                        selectedImage === index
-                          ? 'border-blue-600'
-                          : 'border-gray-200'
-                      }`}
+                      className={`flex-1 rounded-lg overflow-hidden border-2 ${selectedImage === index ? 'border-blue-600' : 'border-gray-200'
+                        }`}
                     >
                       <img
                         src={image}
@@ -99,6 +157,7 @@ export default function ProductPage({
               )}
             </div>
 
+            {/* Detalles del producto */}
             <div>
               <div className="mb-4">
                 <p className="text-sm text-gray-500 mb-2">{product.brand}</p>
@@ -145,9 +204,7 @@ export default function ProductPage({
                       </button>
                       <span className="px-6 py-2 font-semibold">{quantity}</span>
                       <button
-                        onClick={() =>
-                          setQuantity(Math.min(product.stock, quantity + 1))
-                        }
+                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                         className="p-2 hover:bg-gray-100"
                       >
                         <Plus className="w-4 h-4" />
@@ -177,18 +234,14 @@ export default function ProductPage({
                   <Truck className="w-6 h-6 text-blue-600 flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-sm">Envío gratis</p>
-                    <p className="text-xs text-gray-600">
-                      En compras mayores a $15.000
-                    </p>
+                    <p className="text-xs text-gray-600">En compras mayores a $15.000</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-sm">Compra segura</p>
-                    <p className="text-xs text-gray-600">
-                      Protección al comprador
-                    </p>
+                    <p className="text-xs text-gray-600">Protección al comprador</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -202,6 +255,7 @@ export default function ProductPage({
             </div>
           </div>
 
+          {/* Descripción */}
           <div className="mt-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4">Descripción</h2>
             <div className="text-gray-700 leading-relaxed">
@@ -226,6 +280,7 @@ export default function ProductPage({
           </div>
         </div>
 
+        {/* Productos relacionados */}
         {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold mb-6">Productos Relacionados</h2>
@@ -234,8 +289,7 @@ export default function ProductPage({
                 <ProductCard
                   key={related.id}
                   product={related}
-                  onProductClick={onProductClick}
-                  onAddToCart={onAddToCart}
+                // ProductCard ya debe estar adaptado a React Router
                 />
               ))}
             </div>

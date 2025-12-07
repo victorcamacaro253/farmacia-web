@@ -54,6 +54,10 @@ function AppContent() {
     navigate('/mapa');
   };
 
+    const handleAuthSuccess = () => {
+    navigate('/'); // o '/perfil', '/carrito', etc.
+  };
+
 
   const handleCartClick = () => {};
 
@@ -98,7 +102,7 @@ function AppContent() {
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/buscar" element={<SearchPage />} />
           <Route path="/sucursales" element={<BranchesPage />} />
-          <Route path="/auth" element={<AuthPage onSuccess={() => {}} />} />
+          <Route path="/auth" element={<AuthPage  onSuccess={handleAuthSuccess} />} />
           <Route path="/sobre-nosotros" element={<AboutPage />} />
           <Route path="/perfil" element={<ProfilePage onLogout={logout} onBranchClick={handleMapClick} onOrderClick={handleOrderClick} />} />
           <Route path="/pedido/:orderId" element={<OrderDetailPage onBack={() => {}} />} />

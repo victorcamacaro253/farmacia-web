@@ -8,6 +8,7 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   const handleCheckout = () => {
+    
     navigate('/checkout');
   };
 

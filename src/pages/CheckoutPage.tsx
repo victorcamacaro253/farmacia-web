@@ -6,10 +6,12 @@ import mockData from '../data/data.json';
 import type { Branch } from '../types';
 import { useNavigate } from 'react-router-dom'; 
 import { orderService } from '../services/OrderService';
+import { useAuth } from '../hooks/useAuth';
 
 
 
 export default function CheckoutPage() {
+  const { user,loading } = useAuth();
   const navigate = useNavigate(); 
   const { items, totalPrice, clearCart } = useCart();
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -36,8 +38,34 @@ export default function CheckoutPage() {
     }
   }, []);
 
+   useEffect(() => {
+    console.log('User state changed:', user, 'Loading:', loading);
+    if (!loading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
+
+ if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
+
+   if (!user) {
+    return null;
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+    alert('Debes iniciar sesión para finalizar la compra.');
+    navigate('/auth');
+    return;
+  }
 
     if (deliveryMethod === 'pickup' && !selectedBranch) {
       alert('Por favor seleccioná una sucursal para el retiro');
@@ -72,8 +100,10 @@ export default function CheckoutPage() {
           product_id: item.product.id,
           quantity: item.quantity,
           price: item.product.price,
+          image: item.product.images,
         })),
       });
+      console.log('New Order Created:', newOrder);
 
     // Guardar en localStorage (opcional, para persistencia)
     localStorage.setItem('lastOrder', JSON.stringify(newOrder));
