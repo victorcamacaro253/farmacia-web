@@ -56,6 +56,8 @@ export function useAuth() {
         postal_code: user.postal_code,
         preferred_branch_id: user.preferred_branch_id,
       };
+
+      
       
       localStorage.setItem('user', JSON.stringify(safeUser));
       setUser(safeUser);

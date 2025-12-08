@@ -46,9 +46,9 @@ function AppContent() {
   }, []);
 
   // Funciones para el Header
-  const handleSearch = (query: string) => {
-    navigate(`/buscar?q=${encodeURIComponent(query)}`);
-  };
+ const handleAboutClick = () => {
+  navigate('/sobre-nosotros');
+};
 
     const handleBranchClick = () => {
     navigate('/mapa');
@@ -111,7 +111,7 @@ function AppContent() {
         </Routes>
       </main>
 
-      <Footer onMapClick={handleMapClick} onAboutClick={() => {}} />
+      <Footer onMapClick={handleMapClick} onAboutClick={handleAboutClick} />
     </div>
   );
 }
