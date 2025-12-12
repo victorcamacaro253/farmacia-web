@@ -1,47 +1,51 @@
 // pages/SearchPage.tsx
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import mockData from '../data/data.json';
 import type { Product } from '../types';
+import { useCart } from '../context/CartContext';
 
-interface SearchPageProps {
-  searchQuery: string;
-  onProductClick: (slug: string) => void;
-  onAddToCart: (product: Product) => void;
-}
-
-export default function SearchPage({
-  searchQuery,
-  onProductClick,
-  onAddToCart,
-}: SearchPageProps) {
+export default function SearchPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { addToCart } = useCart(); // Asegúrate de que tu CartContext tenga addToCart
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const searchQuery = searchParams.get('q') || '';
+
   useEffect(() => {
     if (searchQuery) {
-      searchProducts();
+      searchProducts(searchQuery);
+    } else {
+      setProducts([]);
     }
   }, [searchQuery]);
 
-  const searchProducts = () => {
+  const searchProducts = (term: string) => {
     setLoading(true);
-    
-    // Simular retraso de búsqueda (opcional)
+    // Simulamos carga rápida
     setTimeout(() => {
-      const term = searchQuery.toLowerCase().trim();
-      
-      const filtered = mockData.products.filter(product => {
-        const matchesName = product.name.toLowerCase().includes(term);
-        const matchesBrand = product.brand.toLowerCase().includes(term);
-        const matchesTags = product.tags?.some(tag => tag.toLowerCase().includes(term));
+      const normalizedTerm = term.toLowerCase().trim();
+      const filtered = mockData.products.filter((product) => {
+        const matchesName = product.name.toLowerCase().includes(normalizedTerm);
+        const matchesBrand = product.brand?.toLowerCase().includes(normalizedTerm);
+        const matchesTags = product.tags?.some(tag => tag.toLowerCase().includes(normalizedTerm));
         return matchesName || matchesBrand || matchesTags;
       });
-
       setProducts(filtered);
       setLoading(false);
-    }, 300); // Simula carga rápida
+    }, 300);
+  };
+
+  const handleProductClick = (slug: string) => {
+    navigate(`/producto/${slug}`);
+  };
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
   };
 
   return (
@@ -73,8 +77,8 @@ export default function SearchPage({
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onProductClick={onProductClick}
-                  onAddToCart={onAddToCart}
+                  onProductClick={handleProductClick}
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>

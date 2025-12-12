@@ -101,6 +101,16 @@ export default function Header({
             </span>
           </Link>
 
+          <div className="flex items-center gap-1 px-2 py-1 bg-white rounded   cursor-pointer hover:bg-gray-50">
+  <img
+    alt="Argentina"
+    src="https://utilities.farmatodo.com//arg.svg"
+    className="w-8 h-6 object-contain"
+  />
+  Argentina
+  
+</div>
+
           {/* Búsqueda desktop */}
           <form onSubmit={handleSearch} className="flex-1 max-w-2xl hidden md:block">
             <div className="relative max-w-md mx-auto">
